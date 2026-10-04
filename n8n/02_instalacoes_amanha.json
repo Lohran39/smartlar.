@@ -1,0 +1,129 @@
+{
+  "name": "SmartLar | Instalações de amanhã",
+  "nodes": [
+    {
+      "id": "0959296b-c4a1-4f1f-a53c-6bb0620a3a64",
+      "name": "Diariamente às 18h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3bbb6843-6270-4467-b6aa-3c1b5d066933",
+      "name": "Consultar instalações de amanhã",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        250,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://SEU-PROJETO.supabase.co/rest/v1/rpc/instalacoes_amanha",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "e653f71c-c071-4361-83a2-1d072e7d05b1",
+      "name": "Montar resumo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const rows=$input.all().map(i=>i.json).filter(i=>i.pedido_id); if(!rows.length)return []; return [{json:{tipo:'instalacoes_amanha',quantidade:rows.length,instalacoes:rows}}];"
+      }
+    },
+    {
+      "id": "a9b6b9c1-3ea7-4205-a807-11671ad98bc6",
+      "name": "Enviar ao destino",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        750,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://SUBSTITUA-PELO-DESTINO",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "Diariamente às 18h": {
+      "main": [
+        [
+          {
+            "node": "Consultar instalações de amanhã",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar instalações de amanhã": {
+      "main": [
+        [
+          {
+            "node": "Montar resumo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar resumo": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao destino",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "tags": []
+}

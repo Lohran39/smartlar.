@@ -1,0 +1,91 @@
+{
+  "name": "SmartLar | Novo orçamento",
+  "nodes": [
+    {
+      "id": "d656742b-fda9-4587-8108-f44d75750402",
+      "name": "Novo orçamento",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "smartlar-novo-orcamento",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "webhookId": "2f498aab-ca30-49c4-b773-d86d027e6c20"
+    },
+    {
+      "id": "19b79f23-37bc-451d-badb-587b84fc27d4",
+      "name": "Validar evento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        250,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const e=$json.body?.record; if (!e || e.tipo !== 'novo_orcamento' || !e.payload?.cliente || e.payload.valor_total == null) throw new Error('Evento inválido'); return [{json:{event_id:e.id,...e.payload}}];"
+      }
+    },
+    {
+      "id": "ef82d84a-1fcf-4077-8c71-d81676dbd509",
+      "name": "Enviar ao destino",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        500,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://SUBSTITUA-PELO-DESTINO",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "Novo orçamento": {
+      "main": [
+        [
+          {
+            "node": "Validar evento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar evento": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao destino",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "tags": []
+}
